@@ -2,7 +2,6 @@ import axios from 'axios';
 
 // Backend API base URL for vocabulary operations
 const backendUrl = 'https://server-chinese-vietnamese.onrender.com';
-9
 /**
  * Get all vocabulary words from the backend
  * @returns {Array|null} Array of vocab objects, or null if error
