@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Backend API base URL for vocabulary operations
-const backendUrl = 'http://localhost:3000/vocabs';
+const backendUrl = 'https://server-chinese-vietnamese.onrender.com';
 9
 /**
  * Get all vocabulary words from the backend
