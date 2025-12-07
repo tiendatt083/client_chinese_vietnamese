@@ -8,7 +8,7 @@ const backendUrl = 'https://server-chinese-vietnamese.onrender.com';
  */
 export const viewAllWords = async () => {
    try {
-      const response = await axios.get(backendUrl);
+      const response = await axios.get(`${backendUrl}/vocabs`);
       return response.data;
    } catch (err) {
       console.error(err);
@@ -23,7 +23,7 @@ export const viewAllWords = async () => {
  */
 export const viewWordById = async (id) => {
    try {
-      const response = await axios.get(`${backendUrl}/${id}`);
+      const response = await axios.get(`${backendUrl}/vocabs/${id}`);
       return response.data;
    } catch (err) {
       console.error(err);
@@ -38,7 +38,7 @@ export const viewWordById = async (id) => {
  */
 export const addNewWord = async (word) => {
    try {
-      const response = await axios.post(backendUrl, word);
+      const response = await axios.post(`${backendUrl}/vocabs`, word);
       return response.data;
    } catch (err) {
       console.error(err);
@@ -54,7 +54,7 @@ export const addNewWord = async (word) => {
  */
 export const editWord = async (id, word) => {
    try {
-      const response = await axios.put(`${backendUrl}/${id}`, word);
+      const response = await axios.put(`${backendUrl}/vocabs/${id}`, word);
       return response.data;
    } catch (err) {
       console.error(err);
@@ -69,7 +69,7 @@ export const editWord = async (id, word) => {
  */
 export const deleteWord = async (id) => {
    try {
-      const response = await axios.delete(`${backendUrl}/${id}`);
+      const response = await axios.delete(`${backendUrl}/vocabs/${id}`);
       return response.data;
    } catch (err) {
       console.error(err);
@@ -83,7 +83,7 @@ export const deleteWord = async (id) => {
  */
 export const deleteAllWords = async () => {
    try {
-      const response = await axios.delete(backendUrl);
+      const response = await axios.delete(`${backendUrl}/vocabs`);
       return response.data.message;
    } catch (err) {
       console.error(err);
