@@ -12,7 +12,7 @@
       <!-- Part of speech -->
       <div class="ui labeled input fluid">
         <div class="ui label"><i class="tag icon"></i> Loại từ</div>
-        <select v-model="word.pos" required>
+        <select v-model="word.pos" required v-if="!showCustomPosInput" @change="handlePosChange">
           <option value="">-- Chọn --</option>
           <option value="danh từ">Danh từ</option>
           <option value="động từ">Động từ</option>
@@ -21,6 +21,24 @@
           <option value="cụm từ">Cụm từ</option>
           <option value="khác">Khác</option>
         </select>
+        <div v-else style="display: flex; align-items: center; flex: 1;">
+          <input 
+            type="text" 
+            v-model="word.pos" 
+            placeholder="Nhập loại từ tùy chỉnh"
+            required
+            style="flex: 1;"
+          />
+          <button 
+            type="button" 
+            @click="resetPosSelection"
+            class="ui mini button"
+            style="margin-left: 8px; padding: 8px 12px;"
+            title="Quay lại chọn từ danh sách"
+          >
+            ↶
+          </button>
+        </div>
       </div>
       <br />
       <!-- Vietnamese input field -->
@@ -39,21 +57,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { viewAllWords, addNewWord } from "../helpers/api";
 
 const word = ref({ chinese: '', pos: '', vietnamese: '' });
 const words = ref([]);
 const router = useRouter();
+const showCustomPosInput = ref(false);
+
+// Handle when user selects from dropdown
+const handlePosChange = () => {
+  if (word.value.pos === 'khác') {
+    showCustomPosInput.value = true;
+    word.value.pos = ''; // Clear to allow user to type
+  } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos)) {
+    showCustomPosInput.value = false;
+  }
+};
+
+// Reset to dropdown selection
+const resetPosSelection = () => {
+  showCustomPosInput.value = false;
+  word.value.pos = '';
+};
 
 // Load all words for duplicate check
 onMounted(async () => {
   words.value = await viewAllWords() || [];
 });
 
-  const onSubmit = async () => {
-  const { chinese, vietnamese } = word.value;
+const onSubmit = async () => {
+  const { chinese, vietnamese, pos } = word.value;
+  
+  // If pos is empty or just "khác", don't submit
+  if (!pos || pos.trim() === '') {
+    alert('Vui lòng chọn hoặc nhập loại từ');
+    return;
+  }
+  
   const norm = str => str.trim().toLowerCase();
 
   // Find duplicates

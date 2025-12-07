@@ -10,7 +10,7 @@
         <br />
         <div class="ui labeled input fluid">
           <div class="ui label"><i class="tag icon"></i> Loại từ</div>
-          <select v-model="word.pos" required>
+          <select v-model="word.pos" required v-if="!showCustomPosInput" @change="handlePosChange">
             <option value="">-- Chọn --</option>
             <option value="danh từ">Danh từ</option>
             <option value="động từ">Động từ</option>
@@ -19,6 +19,24 @@
             <option value="cụm từ">Cụm từ</option>
             <option value="khác">Khác</option>
           </select>
+          <div v-else style="display: flex; align-items: center; flex: 1;">
+            <input 
+              type="text" 
+              v-model="word.pos" 
+              placeholder="Nhập loại từ tùy chỉnh"
+              required
+              style="flex: 1;"
+            />
+            <button 
+              type="button" 
+              @click="resetPosSelection"
+              class="ui mini button"
+              style="margin-left: 8px; padding: 8px 12px;"
+              title="Quay lại chọn từ danh sách"
+            >
+              ↶
+            </button>
+          </div>
         </div>
         <br />
         <div class="ui labeled input fluid">
@@ -41,7 +59,7 @@
 
 <script>
 // Vue composition API imports
-import { ref, onMounted } from 'vue';           
+import { ref, computed, onMounted } from 'vue';           
 import { useRoute, useRouter } from 'vue-router';
 // API functions to get and update word
 import { viewWordById, editWord } from "../helpers/api";
@@ -53,6 +71,32 @@ export default {
     const word = ref({});
     const route = useRoute();
     const router = useRouter();
+    const showCustomPosInput = ref(false);
+    
+    // Check if current pos is custom when loading word
+    const checkIfCustomPos = () => {
+      if (!word.value.pos) {
+        showCustomPosInput.value = false;
+        return;
+      }
+      showCustomPosInput.value = !['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos);
+    };
+    
+    // Handle when user selects from dropdown
+    const handlePosChange = () => {
+      if (word.value.pos === 'khác') {
+        showCustomPosInput.value = true;
+        word.value.pos = ''; // Clear to allow user to type
+      } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos)) {
+        showCustomPosInput.value = false;
+      }
+    };
+    
+    // Reset to dropdown selection
+    const resetPosSelection = () => {
+      showCustomPosInput.value = false;
+      word.value.pos = '';
+    };
 
     // Load word by id when component mounts
     onMounted(async () => {
@@ -62,6 +106,7 @@ export default {
         word.value = {};
       } else {
         word.value = result;
+        checkIfCustomPos();
       }
     });
 
@@ -78,7 +123,10 @@ export default {
     // Return state and handlers to template
     return {
       word,
-      onSubmit
+      onSubmit,
+      showCustomPosInput,
+      handlePosChange,
+      resetPosSelection
     };
   }
 };
