@@ -72,6 +72,21 @@ const quizEnded = ref(false);
 const answered = ref(false);
 const loading = ref(true);
 
+// Helper function to remove Vietnamese diacritics (dấu)
+const removeDiacritics = (str) => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
+// Helper function to normalize text for comparison (lowercase + remove diacritics)
+const normalizeForSearch = (str) => {
+  return removeDiacritics(str.toLowerCase());
+};
+
 // Lấy dữ liệu từ API
 onMounted(async () => {
   const res = await viewAllWords();
@@ -105,16 +120,16 @@ const nextWord = () => {
 
 const checkAnswer = () => {
   if (!currentWord.value || answered.value) return;
-  const correct = (askVietnamese.value ? currentWord.value.chinese : currentWord.value.vietnamese)
-    .trim().toLowerCase();
-  const user = userAnswer.value.trim().toLowerCase();
+  const correctAnswer = askVietnamese.value ? currentWord.value.chinese : currentWord.value.vietnamese;
+  const correctNormalized = normalizeForSearch(correctAnswer.trim());
+  const userNormalized = normalizeForSearch(userAnswer.value.trim());
   answered.value = true;
-  if (user === correct) {
+  if (userNormalized === correctNormalized) {
     score.value++;
     feedback.value = '✅ Correct!';
     isCorrect.value = true;
   } else {
-    feedback.value = `❌ Incorrect. Correct answer: "${correct}"`;
+    feedback.value = `❌ Incorrect. Correct answer: "${correctAnswer}"`;
     isCorrect.value = false;
   }
   setTimeout(() => {

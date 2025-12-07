@@ -195,19 +195,34 @@ const speak = (text, lang) => {
 // Generate A-Z alphabet
 const alphabet = Array.from({length: 26}, (_, i) => String.fromCharCode(65 + i));
 
+// Helper function to remove Vietnamese diacritics (dấu)
+const removeDiacritics = (str) => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
+// Helper function to normalize text for search (lowercase + remove diacritics)
+const normalizeForSearch = (str) => {
+  return removeDiacritics(str.toLowerCase());
+};
+
 // Filtered, sorted list based on search, favorite, and first letter
 const filteredWords = computed(() => {
   let arr = words.value;
 
-  // Filter by search text
+  // Filter by search text (case-insensitive and diacritic-insensitive)
   if (searchText.value) {
-    const keyword = searchText.value.trim().toLowerCase();
+    const keyword = normalizeForSearch(searchText.value.trim());
     arr = arr.filter(
       (word) =>
-        (word.chinese && word.chinese.toLowerCase().includes(keyword)) ||
-        (word.pinyin && word.pinyin.toLowerCase().includes(keyword)) ||
-        (word.vietnamese && word.vietnamese.toLowerCase().includes(keyword)) ||
-        (word.pos && word.pos.toLowerCase().includes(keyword))
+        (word.chinese && normalizeForSearch(word.chinese).includes(keyword)) ||
+        (word.pinyin && normalizeForSearch(word.pinyin).includes(keyword)) ||
+        (word.vietnamese && normalizeForSearch(word.vietnamese).includes(keyword)) ||
+        (word.pos && normalizeForSearch(word.pos).includes(keyword))
     );
   }
 

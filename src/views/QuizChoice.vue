@@ -16,34 +16,51 @@
         <div><strong>Điểm:</strong> {{ score }}</div>
       </div>
 
-      <p class="question-label">Chọn nghĩa tiếng Việt đúng:</p>
-      <h2 class="question-text">{{ currentWord.chinese }}</h2>
-      <p class="pinyin">Pinyin: {{ currentWord.pinyin }}</p>
-
-      <div class="options">
-        <button
-          v-for="(opt, idx) in options"
-          :key="idx"
-          class="ui button option-btn"
-          :class="buttonClass(opt)"
-          :disabled="answered"
-          @click="selectOption(opt)"
-        >
-          {{ opt }}
+      <!-- Mode selector -->
+      <div class="mode-selector" v-if="!quizStarted">
+        <h3>Chọn chế độ trắc nghiệm:</h3>
+        <button class="ui button primary" @click="startQuiz('vietnamese')">
+          Chọn nghĩa tiếng Việt
+        </button>
+        <button class="ui button primary" @click="startQuiz('chinese')">
+          Chọn nghĩa tiếng Trung
         </button>
       </div>
 
-      <div v-if="feedback" :class="['ui message', isCorrect ? 'positive' : 'negative']">
-        {{ feedback }}
-      </div>
+      <div v-else>
+        <p class="question-label">
+          {{ quizMode === 'vietnamese' ? 'Chọn nghĩa tiếng Việt đúng:' : 'Chọn nghĩa tiếng Trung đúng:' }}
+        </p>
+        <h2 class="question-text">
+          {{ quizMode === 'vietnamese' ? currentWord.chinese : currentWord.vietnamese }}
+        </h2>
+        <p v-if="quizMode === 'vietnamese'" class="pinyin">Pinyin: {{ currentWord.pinyin }}</p>
 
-      <div class="actions">
-        <button class="ui primary button" @click="nextQuestion" :disabled="!answered">
-          Câu tiếp
-        </button>
-        <button class="ui basic button" @click="restartQuiz">
-          Làm lại
-        </button>
+        <div class="options">
+          <button
+            v-for="(opt, idx) in options"
+            :key="idx"
+            class="ui button option-btn"
+            :class="buttonClass(opt)"
+            :disabled="answered"
+            @click="selectOption(opt)"
+          >
+            {{ opt }}
+          </button>
+        </div>
+
+        <div v-if="feedback" :class="['ui message', isCorrect ? 'positive' : 'negative']">
+          {{ feedback }}
+        </div>
+
+        <div class="actions">
+          <button class="ui primary button" @click="nextQuestion" :disabled="!answered">
+            Câu tiếp
+          </button>
+          <button class="ui basic button" @click="restartQuiz">
+            Làm lại
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -64,19 +81,39 @@ const feedback = ref('')
 const isCorrect = ref(false)
 const score = ref(0)
 const selectedOption = ref('')
+const quizMode = ref('vietnamese') // 'vietnamese' or 'chinese'
+const quizStarted = ref(false)
 
 const currentWord = computed(() => quizWords.value[currentIndex.value] || {})
+
+// Helper function to remove Vietnamese diacritics (dấu)
+const removeDiacritics = (str) => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
+// Helper function to normalize text for comparison (lowercase + remove diacritics)
+const normalizeForSearch = (str) => {
+  return removeDiacritics(str.toLowerCase());
+};
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5)
 
 const buildOptions = (correctWord) => {
+  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
   const distractors = shuffle(
-    words.value.filter(w => w._id !== correctWord._id).map(w => w.vietnamese)
+    words.value.filter(w => w._id !== correctWord._id).map(w => w[fieldName])
   ).slice(0, 3)
-  options.value = shuffle([correctWord.vietnamese, ...distractors])
+  options.value = shuffle([correctWord[fieldName], ...distractors])
 }
 
-const startQuiz = () => {
+const startQuiz = (mode) => {
+  quizMode.value = mode;
+  quizStarted.value = true;
   quizWords.value = shuffle(words.value).slice(0, Math.min(totalQuestions, words.value.length))
   currentIndex.value = 0
   score.value = 0
@@ -89,9 +126,13 @@ const selectOption = (opt) => {
   if (answered.value || !currentWord.value) return
   answered.value = true
   selectedOption.value = opt
-  const correct = opt === currentWord.value.vietnamese
+  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
+  const correctAnswer = currentWord.value[fieldName];
+  const correctNormalized = normalizeForSearch(correctAnswer);
+  const selectedNormalized = normalizeForSearch(opt);
+  const correct = correctNormalized === selectedNormalized;
   isCorrect.value = correct
-  feedback.value = correct ? '✅ Chính xác!' : `❌ Sai. Đáp án: ${currentWord.value.vietnamese}`
+  feedback.value = correct ? '✅ Chính xác!' : `❌ Sai. Đáp án: ${correctAnswer}`
   if (correct) score.value++
 }
 
@@ -109,13 +150,19 @@ const nextQuestion = () => {
 }
 
 const restartQuiz = () => {
-  startQuiz()
+  quizStarted.value = false;
+  answered.value = false;
+  feedback.value = '';
 }
 
 const buttonClass = (opt) => {
   if (!answered.value) return ''
-  if (opt === currentWord.value.vietnamese) return 'green'
-  if (opt === selectedOption.value) return 'red'
+  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
+  const correctAnswer = currentWord.value[fieldName];
+  const correctNormalized = normalizeForSearch(correctAnswer);
+  const optNormalized = normalizeForSearch(opt);
+  if (correctNormalized === optNormalized) return 'green'
+  if (normalizeForSearch(selectedOption.value) === optNormalized) return 'red'
   return ''
 }
 
@@ -123,7 +170,6 @@ onMounted(async () => {
   const res = await viewAllWords()
   words.value = Array.isArray(res) ? res : []
   loading.value = false
-  if (words.value.length) startQuiz()
 })
 </script>
 
@@ -187,6 +233,21 @@ h1 {
   gap: 10px;
   justify-content: flex-end;
   margin-top: 10px;
+}
+
+.mode-selector {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.mode-selector h3 {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.mode-selector .ui.button {
+  margin: 0 10px;
+  min-width: 180px;
 }
 </style>
 
