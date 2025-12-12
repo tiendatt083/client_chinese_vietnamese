@@ -18,6 +18,7 @@
           <option value="động từ">Động từ</option>
           <option value="tính từ">Tính từ</option>
           <option value="trạng từ">Trạng từ</option>
+          <option value="trợ từ">Trợ từ</option>
           <option value="cụm từ">Cụm từ</option>
           <option value="khác">Khác</option>
         </select>
@@ -47,6 +48,12 @@
         <input type="text" required v-model="word.vietnamese" />
       </div>
       <br />
+      <!-- Optional note field -->
+      <div class="ui labeled input fluid">
+        <div class="ui label"><i class="sticky note outline icon"></i> Ghi chú</div>
+        <input type="text" v-model="word.note" placeholder="Tuỳ chọn" />
+      </div>
+      <br />
       <div class="hint-text">
         Pinyin sẽ được tự động sinh từ nội dung tiếng Trung sau khi lưu, bạn không cần nhập.
       </div>
@@ -61,7 +68,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { viewAllWords, addNewWord } from "../helpers/api";
 
-const word = ref({ chinese: '', pos: '', vietnamese: '' });
+const word = ref({ chinese: '', pos: '', vietnamese: '', note: '' });
 const words = ref([]);
 const router = useRouter();
 const showCustomPosInput = ref(false);
@@ -71,7 +78,7 @@ const handlePosChange = () => {
   if (word.value.pos === 'khác') {
     showCustomPosInput.value = true;
     word.value.pos = ''; // Clear to allow user to type
-  } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos)) {
+  } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'trợ từ', 'cụm từ'].includes(word.value.pos)) {
     showCustomPosInput.value = false;
   }
 };

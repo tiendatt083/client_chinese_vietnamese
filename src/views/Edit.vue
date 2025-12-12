@@ -16,6 +16,7 @@
             <option value="động từ">Động từ</option>
             <option value="tính từ">Tính từ</option>
             <option value="trạng từ">Trạng từ</option>
+            <option value="trợ từ">Trợ từ</option>
             <option value="cụm từ">Cụm từ</option>
             <option value="khác">Khác</option>
           </select>
@@ -42,6 +43,12 @@
         <div class="ui labeled input fluid">
           <div class="ui label"><i class="vietnam flag"></i> Tiếng Việt</div>
           <input type="text" required v-model="word.vietnamese" />
+        </div>
+        <br />
+
+        <div class="ui labeled input fluid">
+          <div class="ui label"><i class="sticky note outline icon"></i> Ghi chú</div>
+          <input type="text" v-model="word.note" placeholder="Tuỳ chọn" />
         </div>
         <br />
         
@@ -79,7 +86,7 @@ export default {
         showCustomPosInput.value = false;
         return;
       }
-      showCustomPosInput.value = !['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos);
+      showCustomPosInput.value = !['danh từ', 'động từ', 'tính từ', 'trạng từ', 'trợ từ', 'cụm từ'].includes(word.value.pos);
     };
     
     // Handle when user selects from dropdown
@@ -87,7 +94,7 @@ export default {
       if (word.value.pos === 'khác') {
         showCustomPosInput.value = true;
         word.value.pos = ''; // Clear to allow user to type
-      } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'cụm từ'].includes(word.value.pos)) {
+      } else if (word.value.pos && ['danh từ', 'động từ', 'tính từ', 'trạng từ', 'trợ từ', 'cụm từ'].includes(word.value.pos)) {
         showCustomPosInput.value = false;
       }
     };

@@ -1,40 +1,38 @@
 <template>
   <div class="quiz-container">
-    <h1>Trắc nghiệm nghĩa (4 lựa chọn)</h1>
+    <h1>Trắc nghiệm tiếng Trung (chọn Pinyin)</h1>
 
     <div v-if="loading" class="ui segment center">
       <div class="ui active inline loader"></div> Đang tải dữ liệu...
     </div>
 
-    <div v-else-if="!words.length" class="ui segment center">
-      Chưa có từ nào, hãy thêm từ trước.
+    <div v-else-if="!activeWords.length" class="ui segment center">
+      Chưa có đủ từ, hãy thêm từ trước.
     </div>
 
     <div v-else class="ui segment quiz-card">
       <div class="quiz-head">
-        <div><strong>Câu {{ currentIndex + 1 }} / {{ totalQuestions }}</strong></div>
+        <div><strong>Câu {{ quizStarted ? currentIndex + 1 : 0 }} / {{ totalQuestions }}</strong></div>
         <div><strong>Điểm:</strong> {{ score }}</div>
+        <div class="source">Nguồn: {{ activeLabel }}</div>
       </div>
 
-      <!-- Mode selector -->
       <div class="mode-selector" v-if="!quizStarted">
-        <h3>Chọn chế độ trắc nghiệm:</h3>
-        <button class="ui button primary" @click="startQuiz('vietnamese')">
-          Chọn nghĩa tiếng Việt
-        </button>
-        <button class="ui button primary" @click="startQuiz('chinese')">
-          Chọn nghĩa tiếng Trung
-        </button>
+        <p class="note-text">Tập trung vào pinyin, câu hỏi hiển thị nghĩa tiếng Việt.</p>
+        <div class="controls">
+          <button class="ui button" @click="toggleRecent">
+            {{ useRecent ? 'Dùng toàn bộ' : 'Dùng 30 từ mới nhất' }}
+          </button>
+          <button class="ui primary button" @click="startQuiz" :disabled="!activeWords.length">
+            Bắt đầu
+          </button>
+        </div>
       </div>
 
       <div v-else>
-        <p class="question-label">
-          {{ quizMode === 'vietnamese' ? 'Chọn nghĩa tiếng Việt đúng:' : 'Chọn nghĩa tiếng Trung đúng:' }}
-        </p>
-        <h2 class="question-text">
-          {{ quizMode === 'vietnamese' ? currentWord.chinese : currentWord.vietnamese }}
-        </h2>
-        <p v-if="quizMode === 'vietnamese'" class="pinyin">Pinyin: {{ currentWord.pinyin }}</p>
+        <p class="question-label">Chọn pinyin đúng cho nghĩa:</p>
+        <h2 class="question-text">{{ currentWord.vietnamese }}</h2>
+        <p v-if="currentWord.note" class="note-text">Ghi chú: {{ currentWord.note }}</p>
 
         <div class="options">
           <button
@@ -51,6 +49,7 @@
 
         <div v-if="feedback" :class="['ui message', isCorrect ? 'positive' : 'negative']">
           {{ feedback }}
+          <div v-if="answered" class="answer-extra">Tiếng Trung: {{ currentWord.chinese }}</div>
         </div>
 
         <div class="actions">
@@ -70,9 +69,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { viewAllWords } from '@/helpers/api'
 
+const MAX_QUESTIONS = 10
+
 const words = ref([])
 const loading = ref(true)
-const totalQuestions = 10
+const useRecent = ref(false)
 const quizWords = ref([])
 const currentIndex = ref(0)
 const options = ref([])
@@ -81,44 +82,29 @@ const feedback = ref('')
 const isCorrect = ref(false)
 const score = ref(0)
 const selectedOption = ref('')
-const quizMode = ref('vietnamese') // 'vietnamese' or 'chinese'
 const quizStarted = ref(false)
 
+const activeWords = computed(() => useRecent.value ? words.value.slice(0, 30) : words.value)
+const activeLabel = computed(() => useRecent.value ? '30 từ mới nhất' : 'Toàn bộ từ')
+const totalQuestions = computed(() => quizWords.value.length || Math.min(MAX_QUESTIONS, activeWords.value.length))
 const currentWord = computed(() => quizWords.value[currentIndex.value] || {})
-
-// Helper function to remove Vietnamese diacritics (dấu)
-const removeDiacritics = (str) => {
-  if (!str) return '';
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
-};
-
-// Helper function to normalize text for comparison (lowercase + remove diacritics)
-const normalizeForSearch = (str) => {
-  return removeDiacritics(str.toLowerCase());
-};
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5)
 
 const buildOptions = (correctWord) => {
-  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
-  const distractors = shuffle(
-    words.value.filter(w => w._id !== correctWord._id).map(w => w[fieldName])
-  ).slice(0, 3)
-  options.value = shuffle([correctWord[fieldName], ...distractors])
+  const pool = activeWords.value.filter(w => w._id !== correctWord._id).map(w => w.pinyin)
+  const distractorCount = Math.min(3, Math.max(pool.length, 0))
+  const distractors = shuffle(pool).slice(0, distractorCount)
+  options.value = shuffle([correctWord.pinyin, ...distractors].filter(Boolean))
 }
 
-const startQuiz = (mode) => {
-  quizMode.value = mode;
-  quizStarted.value = true;
-  quizWords.value = shuffle(words.value).slice(0, Math.min(totalQuestions, words.value.length))
+const startQuiz = () => {
+  quizWords.value = shuffle(activeWords.value).slice(0, Math.min(MAX_QUESTIONS, activeWords.value.length))
   currentIndex.value = 0
   score.value = 0
   answered.value = false
   feedback.value = ''
+  quizStarted.value = true
   if (quizWords.value.length) buildOptions(quizWords.value[0])
 }
 
@@ -126,11 +112,8 @@ const selectOption = (opt) => {
   if (answered.value || !currentWord.value) return
   answered.value = true
   selectedOption.value = opt
-  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
-  const correctAnswer = currentWord.value[fieldName];
-  const correctNormalized = normalizeForSearch(correctAnswer);
-  const selectedNormalized = normalizeForSearch(opt);
-  const correct = correctNormalized === selectedNormalized;
+  const correctAnswer = currentWord.value.pinyin || ''
+  const correct = (correctAnswer || '').trim().toLowerCase() === (opt || '').trim().toLowerCase()
   isCorrect.value = correct
   feedback.value = correct ? '✅ Chính xác!' : `❌ Sai. Đáp án: ${correctAnswer}`
   if (correct) score.value++
@@ -150,19 +133,28 @@ const nextQuestion = () => {
 }
 
 const restartQuiz = () => {
-  quizStarted.value = false;
-  answered.value = false;
-  feedback.value = '';
+  quizStarted.value = false
+  answered.value = false
+  feedback.value = ''
+  options.value = []
+  quizWords.value = []
+  currentIndex.value = 0
+  score.value = 0
+}
+
+const toggleRecent = () => {
+  useRecent.value = !useRecent.value
+  if (quizStarted.value) {
+    restartQuiz()
+  }
 }
 
 const buttonClass = (opt) => {
   if (!answered.value) return ''
-  const fieldName = quizMode.value === 'vietnamese' ? 'vietnamese' : 'chinese';
-  const correctAnswer = currentWord.value[fieldName];
-  const correctNormalized = normalizeForSearch(correctAnswer);
-  const optNormalized = normalizeForSearch(opt);
-  if (correctNormalized === optNormalized) return 'green'
-  if (normalizeForSearch(selectedOption.value) === optNormalized) return 'red'
+  const correctAnswer = (currentWord.value.pinyin || '').trim().toLowerCase()
+  const optNormalized = (opt || '').trim().toLowerCase()
+  if (correctAnswer === optNormalized) return 'green'
+  if ((selectedOption.value || '').trim().toLowerCase() === optNormalized) return 'red'
   return ''
 }
 

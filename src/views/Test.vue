@@ -1,6 +1,7 @@
 <template>
   <div class="ui container">
     <h2 class="ui header">Vocabulary Test</h2>
+    <p class="source-label">Nguồn: {{ activeLabel }}</p>
 
     <!-- Loading -->
     <div v-if="loading" class="ui segment">
@@ -15,12 +16,17 @@
     <!-- Chưa bắt đầu -->
     <div v-else-if="!quizStarted" class="ui segment" style="text-align:center">
       <h3>Choose number of words to test:</h3>
-      <button class="ui blue button" @click="startQuiz(5)">Test 5 random words</button>
-      <button class="ui green button" @click="startQuiz(10)" :disabled="words.length < 10">
+      <div style="margin-bottom:10px;">
+        <button class="ui button" @click="toggleRecent">
+          {{ useRecent ? 'Dùng toàn bộ từ' : 'Dùng 30 từ mới nhất' }}
+        </button>
+      </div>
+      <button class="ui blue button" @click="startQuiz(5)" :disabled="activeWords.length < 5">Test 5 random words</button>
+      <button class="ui green button" @click="startQuiz(10)" :disabled="activeWords.length < 10">
         Test 10 random words
       </button>
-      <p v-if="words.length < 10" style="margin-top:1em;color:#f2711c">
-        <i class="exclamation icon"></i>Need at least 10 words to enable this option.
+      <p v-if="activeWords.length < 10" style="margin-top:1em;color:#f2711c">
+        <i class="exclamation icon"></i>Cần tối thiểu 10 từ để kiểm tra 10 câu.
       </p>
     </div>
 
@@ -54,10 +60,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { viewAllWords } from '@/helpers/api';
 
 const words = ref([]);
+const useRecent = ref(false);
+const activeWords = computed(() => useRecent.value ? words.value.slice(0, 30) : words.value);
+const activeLabel = computed(() => useRecent.value ? '30 từ mới nhất' : 'Toàn bộ từ');
 const quizWords = ref([]);
 const currentWord = ref(null);
 const askVietnamese = ref(false);
@@ -97,7 +106,8 @@ onMounted(async () => {
 const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
 const startQuiz = num => {
-  quizWords.value = shuffle(words.value).slice(0, num);
+  if (!activeWords.value.length) return;
+  quizWords.value = shuffle(activeWords.value).slice(0, num);
   totalQuestions.value = quizWords.value.length;
   questionNumber.value = 1;
   score.value = 0;
@@ -144,6 +154,11 @@ const resetQuiz = () => {
   score.value = 0;
   questionNumber.value = 1;
 };
+
+const toggleRecent = () => {
+  useRecent.value = !useRecent.value;
+  resetQuiz();
+};
 </script>
 
 
@@ -172,6 +187,12 @@ const resetQuiz = () => {
   background: linear-gradient(90deg,#f7971e,#ffd200,#21d4fd,#b721ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.source-label {
+  text-align: center;
+  color: #666;
+  margin: -12px 0 14px 0;
 }
 
 /* Card-like segment for each quiz step */

@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // Import all route components (pages/views)
 import Words from './views/Words.vue'
-import Show from './views/Show.vue'
 import New from './views/New.vue'
 import Edit from './views/Edit.vue'
 import Test from './views/Test.vue'
@@ -24,11 +23,6 @@ const routes = [
       path: '/words/new',         // Add new word page
       name: 'New',
       component: New
-   },
-   {
-      path: '/words/show/:id',    // Show detail for one word (by id)
-      name: 'Show',
-      component: Show
    },
    {
       path: '/words/edit/:id',    // Edit word page (by id)

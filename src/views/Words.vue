@@ -63,8 +63,9 @@
             <th>Tiếng Trung</th>
             <th>Pinyin</th>
             <th>Loại từ</th>
+            <th>Ghi chú</th>
             <th>Tiếng Việt</th>
-            <th colspan="3">Menu</th>
+            <th colspan="2">Menu</th>
           </tr>
         </thead>
         <tbody>
@@ -98,24 +99,16 @@
             <td>
               {{ word.pos }}
             </td>
-            <!-- Vietnamese + pronounce button -->
+            <!-- Note -->
+            <td>
+              {{ word.note || '—' }}
+            </td>
+            <!-- Vietnamese -->
             <td>
               {{ word.vietnamese }}
-              <button class="ui icon button mini"
-                title="Phát âm tiếng Việt"
-                @click="speak(word.vietnamese, 'vi-VN')"
-                style="margin-left:4px;padding:4px 6px;">
-                🔊
-              </button>
             </td>
 
-            <!-- View, Edit, Delete actions -->
-            <td width="75">
-              <router-link
-                class="ui button green"
-                :to="{ name: 'Show', params: { id: word._id } }"
-              >Show</router-link>
-            </td>
+            <!-- Edit, Delete actions -->
             <td width="75">
               <router-link
                 class="ui button yellow"
@@ -222,7 +215,8 @@ const filteredWords = computed(() => {
         (word.chinese && normalizeForSearch(word.chinese).includes(keyword)) ||
         (word.pinyin && normalizeForSearch(word.pinyin).includes(keyword)) ||
         (word.vietnamese && normalizeForSearch(word.vietnamese).includes(keyword)) ||
-        (word.pos && normalizeForSearch(word.pos).includes(keyword))
+        (word.pos && normalizeForSearch(word.pos).includes(keyword)) ||
+        (word.note && normalizeForSearch(word.note).includes(keyword))
     );
   }
 

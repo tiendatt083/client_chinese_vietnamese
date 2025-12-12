@@ -13,7 +13,11 @@
     <div v-else>
       <div class="stats">
         <span>Đến hạn: {{ dueWords.length }}</span>
-        <span>Tổng thẻ: {{ words.length }}</span>
+        <span>Nguồn: {{ activeLabel }}</span>
+        <span>Tổng thẻ: {{ activeWords.length }}</span>
+        <button class="ui mini basic button" @click="toggleRecent">
+          {{ useRecent ? 'Dùng toàn bộ' : 'Dùng 30 từ mới nhất' }}
+        </button>
       </div>
 
       <div v-if="!currentCard" class="ui segment center">
@@ -40,6 +44,7 @@
             <p class="label">Tiếng Việt</p>
             <h3>{{ currentCard.vietnamese }}</h3>
             <p class="label">Loại từ: {{ currentCard.pos }}</p>
+            <p v-if="currentCard.note" class="note">Ghi chú: {{ currentCard.note }}</p>
           </div>
           <div class="fc-actions">
             <button class="ui red button" @click="grade(false)">Chưa nhớ</button>
@@ -68,6 +73,7 @@ const loading = ref(true)
 const showAnswer = ref(false)
 const queue = ref([])
 const progress = ref({})
+const useRecent = ref(false)
 
 const now = () => Date.now()
 
@@ -84,8 +90,11 @@ const saveProgress = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress.value))
 }
 
+const activeWords = computed(() => useRecent.value ? words.value.slice(0, 30) : words.value)
+const activeLabel = computed(() => useRecent.value ? '30 từ mới nhất' : 'Toàn bộ từ')
+
 const computeDue = () => {
-  const due = words.value.filter(w => {
+  const due = activeWords.value.filter(w => {
     const entry = progress.value[w._id]
     if (!entry) return true
     return entry.dueAt <= now()
@@ -125,7 +134,7 @@ const skip = () => {
 }
 
 const showAll = () => {
-  queue.value = [...words.value]
+  queue.value = [...activeWords.value]
   showAnswer.value = false
 }
 
@@ -133,6 +142,12 @@ const resetProgress = () => {
   if (!confirm('Xóa toàn bộ lịch ôn?')) return
   progress.value = {}
   saveProgress()
+  computeDue()
+  showAnswer.value = false
+}
+
+const toggleRecent = () => {
+  useRecent.value = !useRecent.value
   computeDue()
   showAnswer.value = false
 }
@@ -146,6 +161,10 @@ onMounted(async () => {
 })
 
 watch(progress, saveProgress, { deep: true })
+watch(useRecent, () => {
+  computeDue()
+  showAnswer.value = false
+})
 </script>
 
 <style scoped>
@@ -195,6 +214,11 @@ h2 {
 
 .meaning {
   margin: 10px 0 14px;
+}
+.note {
+  margin-top: 6px;
+  color: #6d6c8b;
+  font-style: italic;
 }
 
 .fc-actions {
