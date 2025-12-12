@@ -31,14 +31,14 @@
       <div v-else class="card">
         <div class="card-front" v-if="!showAnswer">
           <p class="label">Tiếng Trung</p>
-          <h2>{{ currentCard.chinese }}</h2>
+          <h2 class="zh-text">{{ currentCard.chinese }}</h2>
           <p class="pinyin">Pinyin: {{ currentCard.pinyin }}</p>
           <button class="ui primary button" @click="showAnswer = true">Xem nghĩa</button>
         </div>
 
         <div class="card-back" v-else>
           <p class="label">Tiếng Trung</p>
-          <h2>{{ currentCard.chinese }}</h2>
+          <h2 class="zh-text">{{ currentCard.chinese }}</h2>
           <p class="pinyin">Pinyin: {{ currentCard.pinyin }}</p>
           <div class="meaning">
             <p class="label">Tiếng Việt</p>
@@ -219,6 +219,9 @@ h2 {
   margin-top: 6px;
   color: #6d6c8b;
   font-style: italic;
+}
+.zh-text {
+  font-family: 'KaiTi','STKaiti','KaiTi TC',serif;
 }
 
 .fc-actions {

@@ -40,7 +40,7 @@
     <div v-else class="ui segment">
       <p><strong>Question {{ questionNumber }} of {{ totalQuestions }}</strong></p>
       <p><strong>Dịch từ:</strong></p>
-      <h3>{{ askVietnamese ? currentWord.vietnamese : currentWord.chinese }}</h3>
+      <h3 :class="{'zh-text': !askVietnamese}">{{ askVietnamese ? currentWord.vietnamese : currentWord.chinese }}</h3>
       <p v-if="!askVietnamese" style="color:#6d6c8b;margin-top:6px;">Pinyin: {{ currentWord.pinyin }}</p>
 
       <form class="ui form" @submit.prevent="checkAnswer">
@@ -269,6 +269,10 @@ const toggleRecent = () => {
   background: #fff0f0 !important;
   color: #c62828 !important;
   border-color: #f5bcbc !important;
+}
+
+.zh-text {
+  font-family: 'KaiTi','STKaiti','KaiTi TC',serif;
 }
 
 /* Mobile responsive style */

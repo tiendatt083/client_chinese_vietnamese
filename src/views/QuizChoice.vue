@@ -49,7 +49,7 @@
 
         <div v-if="feedback" :class="['ui message', isCorrect ? 'positive' : 'negative']">
           {{ feedback }}
-          <div v-if="answered" class="answer-extra">Tiếng Trung: {{ currentWord.chinese }}</div>
+          <div v-if="answered" class="answer-extra">Tiếng Trung: <span class="zh-text">{{ currentWord.chinese }}</span></div>
         </div>
 
         <div class="actions">
@@ -240,6 +240,10 @@ h1 {
 .mode-selector .ui.button {
   margin: 0 10px;
   min-width: 180px;
+}
+
+.zh-text {
+  font-family: 'KaiTi','STKaiti','KaiTi TC',serif;
 }
 </style>
 

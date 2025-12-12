@@ -63,8 +63,8 @@
             <th>Tiếng Trung</th>
             <th>Pinyin</th>
             <th>Loại từ</th>
-            <th>Ghi chú</th>
             <th>Tiếng Việt</th>
+            <th>Ghi chú</th>
             <th colspan="2">Menu</th>
           </tr>
         </thead>
@@ -82,7 +82,7 @@
               </span>
             </td>
             <!-- Chinese + pronounce button -->
-            <td>
+            <td class="zh-text">
               {{ word.chinese }}
               <button class="ui icon button mini"
                 title="Phát âm tiếng Trung"
@@ -99,13 +99,13 @@
             <td>
               {{ word.pos }}
             </td>
-            <!-- Note -->
-            <td>
-              {{ word.note || '—' }}
-            </td>
             <!-- Vietnamese -->
             <td>
               {{ word.vietnamese }}
+            </td>
+            <!-- Note -->
+            <td>
+              {{ word.note || '—' }}
             </td>
 
             <!-- Edit, Delete actions -->
@@ -387,6 +387,9 @@ const filteredWords = computed(() => {
   color: #2a265e;
   letter-spacing: .2px;
   background: none !important;
+}
+.zh-text {
+  font-family: 'KaiTi','STKaiti','KaiTi TC',serif;
 }
 
 /* Pinyin column styling */
