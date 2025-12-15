@@ -5,8 +5,8 @@
       <div class="navbar-content">
         <!-- Logo section (book icon + brand name) -->
         <div class="logo">
-          <i class="book icon"></i>
-          <span class="brand-name">Vocab<span style="color:#ffb300;">Builder</span></span>
+          <i class="book open icon"></i>
+          <span class="brand-name">Từ Điển<span style="color:#ffb300;">Trung - Việt</span></span>
         </div>
         <!-- Navigation links -->
         <div class="navbar-links">
